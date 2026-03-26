@@ -35,11 +35,55 @@ class ClaudeProvider(AIProvider):
         messages: list[dict],
         tools: list[dict] | None = None,
     ) -> dict:
+        # Extract system messages and remove them from the messages list
+        system_parts: list[str] = []
+        filtered_messages: list[dict] = []
+
+        for msg in messages:
+            if msg["role"] == "system":
+                system_parts.append(msg["content"])
+            else:
+                filtered_messages.append(msg)
+
+        # Convert messages to Claude's expected format
+        claude_messages: list[dict] = []
+        for msg in filtered_messages:
+            if msg["role"] == "assistant" and "tool_calls" in msg:
+                # Convert assistant tool_calls to Claude's tool_use content blocks
+                content_blocks: list[dict] = []
+                if msg.get("content"):
+                    content_blocks.append({"type": "text", "text": msg["content"]})
+                for tc in msg["tool_calls"]:
+                    content_blocks.append({
+                        "type": "tool_use",
+                        "id": tc["id"],
+                        "name": tc["name"],
+                        "input": tc["arguments"] if isinstance(tc["arguments"], dict) else {},
+                    })
+                claude_messages.append({"role": "assistant", "content": content_blocks})
+            elif msg["role"] == "tool":
+                # Convert tool results to Claude's tool_result content blocks
+                claude_messages.append({
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": msg["tool_call_id"],
+                            "content": msg["content"],
+                        }
+                    ],
+                })
+            else:
+                claude_messages.append({"role": msg["role"], "content": msg["content"]})
+
         kwargs: dict = {
             "model": self.model,
             "max_tokens": 4096,
-            "messages": messages,
+            "messages": claude_messages,
         }
+
+        if system_parts:
+            kwargs["system"] = "\n\n".join(system_parts)
 
         if tools:
             claude_tools = [
@@ -84,9 +128,40 @@ class OpenAIProvider(AIProvider):
         messages: list[dict],
         tools: list[dict] | None = None,
     ) -> dict:
+        # Convert messages to OpenAI's expected format
+        openai_messages: list[dict] = []
+
+        for msg in messages:
+            if msg["role"] == "assistant" and "tool_calls" in msg:
+                # Convert to OpenAI's tool_calls format
+                oai_tool_calls = [
+                    {
+                        "id": tc["id"],
+                        "type": "function",
+                        "function": {
+                            "name": tc["name"],
+                            "arguments": tc["arguments"] if isinstance(tc["arguments"], str) else "{}",
+                        },
+                    }
+                    for tc in msg["tool_calls"]
+                ]
+                openai_messages.append({
+                    "role": "assistant",
+                    "content": msg.get("content") or None,
+                    "tool_calls": oai_tool_calls,
+                })
+            elif msg["role"] == "tool":
+                openai_messages.append({
+                    "role": "tool",
+                    "tool_call_id": msg["tool_call_id"],
+                    "content": msg["content"],
+                })
+            else:
+                openai_messages.append({"role": msg["role"], "content": msg["content"]})
+
         kwargs: dict = {
             "model": self.model,
-            "messages": messages,
+            "messages": openai_messages,
         }
 
         if tools:
