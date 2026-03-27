@@ -9,8 +9,11 @@ import {
   Server,
   Container,
   Rocket,
+  LogOut,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +26,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-card">
@@ -60,6 +64,27 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {user && (
+        <div className="border-t border-border p-3">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="size-7 rounded-full bg-blue-600 flex items-center justify-center">
+              <User className="size-3.5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">{user.username}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={logout}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+          >
+            <LogOut className="size-4" />
+            Sign Out
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

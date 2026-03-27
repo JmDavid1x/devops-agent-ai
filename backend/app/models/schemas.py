@@ -3,6 +3,33 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+# Auth schemas
+class UserCreate(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+    username: str = Field(..., min_length=3, max_length=100)
+    password: str = Field(..., min_length=6, max_length=128)
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    username: str
+    is_active: bool
+    created_at: datetime
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+# Chat schemas
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=10000)
     conversation_id: str | None = None

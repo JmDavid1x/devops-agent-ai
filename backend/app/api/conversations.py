@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.security import verify_api_key
+from app.core.security import get_current_user_optional, verify_api_key
 from app.models.db_models import Conversation, Message
 from app.models.schemas import ConversationListItem, ConversationSchema
 
@@ -14,7 +14,10 @@ router = APIRouter(prefix="/api/conversations", tags=["conversations"], dependen
 
 
 @router.get("/", response_model=list[ConversationListItem])
-async def list_conversations(db: AsyncSession = Depends(get_db)):
+async def list_conversations(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict | None = Depends(get_current_user_optional),
+):
     """List all conversations with message counts."""
     stmt = (
         select(
@@ -25,6 +28,8 @@ async def list_conversations(db: AsyncSession = Depends(get_db)):
         .group_by(Conversation.id)
         .order_by(Conversation.updated_at.desc())
     )
+    if current_user:
+        stmt = stmt.where(Conversation.user_id == current_user["sub"])
     result = await db.execute(stmt)
     rows = result.all()
 

@@ -1,6 +1,11 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY ?? "";
 
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("auth_token");
+}
+
 async function fetchAPI(endpoint: string, options?: RequestInit) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -8,6 +13,10 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
   };
   if (API_KEY) {
     headers["X-API-Key"] = API_KEY;
+  }
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
   return fetch(`${BASE_URL}${endpoint}`, {
     ...options,

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.orchestrator import AgentOrchestrator
 from app.core.database import get_db
-from app.core.security import verify_api_key
+from app.core.security import get_current_user_optional, verify_api_key
 from app.models.db_models import Conversation, Message
 from app.models.schemas import ChatRequest, ChatResponse
 
@@ -21,6 +21,7 @@ router = APIRouter(prefix="/api", tags=["chat"], dependencies=[Depends(verify_ap
 async def _get_or_create_conversation(
     db: AsyncSession,
     conversation_id: str | None,
+    user_id: str | None = None,
 ) -> Conversation:
     """Get existing conversation or create a new one."""
     if conversation_id:
@@ -32,7 +33,7 @@ async def _get_or_create_conversation(
         if conv:
             return conv
 
-    conv = Conversation()
+    conv = Conversation(user_id=user_id)
     db.add(conv)
     await db.flush()
     return conv
@@ -55,11 +56,13 @@ async def _get_history(db: AsyncSession, conversation_id: uuid.UUID) -> list[dic
 async def chat(
     request: ChatRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: dict | None = Depends(get_current_user_optional),
 ) -> ChatResponse:
     """Process a chat message using the AI agent."""
     try:
         # Get or create conversation
-        conv = await _get_or_create_conversation(db, request.conversation_id)
+        user_id = current_user.get("sub") if current_user else None
+        conv = await _get_or_create_conversation(db, request.conversation_id, user_id=user_id)
 
         # Get history
         history = await _get_history(db, conv.id)
@@ -116,12 +119,14 @@ async def chat(
 async def chat_stream(
     request: ChatRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: dict | None = Depends(get_current_user_optional),
 ):
     """Stream chat response via Server-Sent Events."""
 
     async def event_generator():
         try:
-            conv = await _get_or_create_conversation(db, request.conversation_id)
+            user_id = current_user.get("sub") if current_user else None
+            conv = await _get_or_create_conversation(db, request.conversation_id, user_id=user_id)
 
             yield f"data: {json.dumps({'type': 'conversation_id', 'data': str(conv.id)})}\n\n"
 

@@ -25,6 +25,27 @@ class JSONType(TypeDecorator):
         return value
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(default=True)
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    conversations: Mapped[list["Conversation"]] = relationship(back_populates="user")
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -34,6 +55,11 @@ class Conversation(Base):
         default=lambda: str(uuid.uuid4()),
     )
     title: Mapped[str] = mapped_column(String(255), default="New Conversation")
+    user_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("users.id"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -44,6 +70,7 @@ class Conversation(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    user: Mapped["User | None"] = relationship(back_populates="conversations")
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation",
         cascade="all, delete-orphan",
