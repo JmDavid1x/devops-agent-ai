@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.security import verify_api_key
 from app.models.schemas import Container
 from app.services.docker_service import docker_service
 
-router = APIRouter(prefix="/api/docker", tags=["docker"])
+router = APIRouter(prefix="/api/docker", tags=["docker"], dependencies=[Depends(verify_api_key)])
 
 
 @router.get("/containers", response_model=list[Container])

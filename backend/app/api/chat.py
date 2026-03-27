@@ -2,19 +2,20 @@ import json
 import uuid
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.orchestrator import AgentOrchestrator
 from app.core.database import get_db
+from app.core.security import verify_api_key
 from app.models.db_models import Conversation, Message
 from app.models.schemas import ChatRequest, ChatResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["chat"])
+router = APIRouter(prefix="/api", tags=["chat"], dependencies=[Depends(verify_api_key)])
 
 
 async def _get_or_create_conversation(

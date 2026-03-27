@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.security import verify_api_key
 from app.models.db_models import HealthCheckResult, ServiceConfig
 from app.models.schemas import (
     HealthCheckResultResponse,
@@ -13,7 +14,7 @@ from app.models.schemas import (
 )
 from app.services.health_checker import health_checker
 
-router = APIRouter(prefix="/api", tags=["services"])
+router = APIRouter(prefix="/api", tags=["services"], dependencies=[Depends(verify_api_key)])
 
 
 @router.get("/services", response_model=list[ServiceWithHealth])

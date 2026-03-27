@@ -5,15 +5,25 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.api.chat import router as chat_router
 from app.api.conversations import router as conversations_router
 from app.api.docker_routes import router as docker_router
 from app.api.services import router as services_router
+from app.core.config import settings
 from app.core.database import init_db
+from app.core.security import SecurityHeadersMiddleware
 from app.services.background_tasks import periodic_health_checks
 
 logging.basicConfig(level=logging.INFO)
+
+# Rate limiter
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -31,9 +41,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="DevOps AI Agent API", version="1.0.0", lifespan=lifespan)
 
+# Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security headers
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS
+allowed_origins = [o.strip() for o in settings.allowed_origins.split(",") if o.strip()]
+if settings.debug and not allowed_origins:
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

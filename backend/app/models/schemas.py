@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(..., min_length=1, max_length=10000)
     conversation_id: str | None = None
 
 
@@ -15,11 +15,11 @@ class ChatResponse(BaseModel):
 
 
 class ServiceConfigCreate(BaseModel):
-    name: str
-    url: str
-    check_interval_seconds: int = 60
-    timeout_seconds: int = 10
-    expected_status_code: int = 200
+    name: str = Field(..., min_length=1, max_length=255)
+    url: str = Field(..., min_length=1, max_length=500)
+    check_interval_seconds: int = Field(default=60, ge=10, le=3600)
+    timeout_seconds: int = Field(default=10, ge=1, le=60)
+    expected_status_code: int = Field(default=200, ge=100, le=599)
 
 
 class ServiceConfigResponse(BaseModel):

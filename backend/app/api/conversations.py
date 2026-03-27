@@ -6,10 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.security import verify_api_key
 from app.models.db_models import Conversation, Message
 from app.models.schemas import ConversationListItem, ConversationSchema
 
-router = APIRouter(prefix="/api/conversations", tags=["conversations"])
+router = APIRouter(prefix="/api/conversations", tags=["conversations"], dependencies=[Depends(verify_api_key)])
 
 
 @router.get("/", response_model=list[ConversationListItem])
