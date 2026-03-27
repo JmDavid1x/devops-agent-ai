@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    // Disable auto-install of native SWC binary (not needed with Turbopack)
+  },
 };
 
 export default nextConfig;

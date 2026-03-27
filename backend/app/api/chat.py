@@ -24,7 +24,7 @@ async def _get_or_create_conversation(
     """Get existing conversation or create a new one."""
     if conversation_id:
         stmt = select(Conversation).where(
-            Conversation.id == uuid.UUID(conversation_id)
+            Conversation.id == conversation_id
         )
         result = await db.execute(stmt)
         conv = result.scalar_one_or_none()

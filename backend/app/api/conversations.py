@@ -48,7 +48,7 @@ async def get_conversation(
     stmt = (
         select(Conversation)
         .options(selectinload(Conversation.messages))
-        .where(Conversation.id == uuid.UUID(conversation_id))
+        .where(Conversation.id == conversation_id)
     )
     result = await db.execute(stmt)
     conv = result.scalar_one_or_none()
@@ -80,7 +80,7 @@ async def delete_conversation(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a conversation."""
-    stmt = select(Conversation).where(Conversation.id == uuid.UUID(conversation_id))
+    stmt = select(Conversation).where(Conversation.id == conversation_id)
     result = await db.execute(stmt)
     conv = result.scalar_one_or_none()
 
