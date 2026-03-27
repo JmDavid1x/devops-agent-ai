@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from contextlib import asynccontextmanager
@@ -10,6 +11,7 @@ from app.api.conversations import router as conversations_router
 from app.api.docker_routes import router as docker_router
 from app.api.services import router as services_router
 from app.core.database import init_db
+from app.services.background_tasks import periodic_health_checks
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,7 +20,13 @@ logging.basicConfig(level=logging.INFO)
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     await init_db()
+    health_task = asyncio.create_task(periodic_health_checks(interval=60))
     yield
+    health_task.cancel()
+    try:
+        await health_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(title="DevOps AI Agent API", version="1.0.0", lifespan=lifespan)

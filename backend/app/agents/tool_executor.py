@@ -54,20 +54,15 @@ async def analyze_logs(service_name: str, time_range: str = "1h", severity: str 
 
 @register_tool("check_service_health")
 async def check_service_health(service_name: str, url: str | None = None) -> dict:
-    """Check health of a service. Returns mock data for now."""
-    return {
-        "service": service_name,
-        "url": url or f"http://{service_name}:8080/health",
-        "status": "healthy",
-        "response_time_ms": 45.2,
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-        "details": {
-            "cpu_usage": "23%",
-            "memory_usage": "512MB / 1GB",
-            "uptime": "72h 14m",
-            "active_connections": 34,
-        },
-    }
+    """Check health of a service using real HTTP requests."""
+    from app.services.health_checker import health_checker
+
+    target_url = url or f"http://{service_name}:8080/health"
+    result = await health_checker.check(url=target_url)
+    result["service"] = service_name
+    result["url"] = target_url
+    result["checked_at"] = datetime.now(timezone.utc).isoformat()
+    return result
 
 
 @register_tool("list_containers")

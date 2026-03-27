@@ -82,6 +82,25 @@ export function getServices() {
   return fetchAPI("/api/services");
 }
 
+export function createService(data: { name: string; url: string; check_interval_seconds?: number; timeout_seconds?: number }) {
+  return fetchAPI("/api/services", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteService(id: string) {
+  return fetchAPI(`/api/services/${id}`, { method: "DELETE" });
+}
+
+export function checkServiceNow(id: string) {
+  return fetchAPI(`/api/services/${id}/check`, { method: "POST" });
+}
+
+export function getServiceHistory(id: string, limit: number = 20) {
+  return fetchAPI(`/api/services/${id}/history?limit=${limit}`);
+}
+
 export function getContainers() {
   return fetchAPI("/api/docker/containers");
 }

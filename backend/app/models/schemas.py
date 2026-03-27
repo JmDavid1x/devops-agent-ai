@@ -14,6 +14,46 @@ class ChatResponse(BaseModel):
     tools_used: list[str] = []
 
 
+class ServiceConfigCreate(BaseModel):
+    name: str
+    url: str
+    check_interval_seconds: int = 60
+    timeout_seconds: int = 10
+    expected_status_code: int = 200
+
+
+class ServiceConfigResponse(BaseModel):
+    id: str
+    name: str
+    url: str
+    check_interval_seconds: int
+    timeout_seconds: int
+    expected_status_code: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class HealthCheckResultResponse(BaseModel):
+    id: str
+    service_id: str
+    status: str
+    response_time_ms: float | None = None
+    status_code: int | None = None
+    error_message: str | None = None
+    checked_at: datetime
+
+
+class ServiceWithHealth(BaseModel):
+    id: str
+    name: str
+    url: str
+    status: str = "unknown"
+    last_check: str | None = None
+    response_time_ms: float | None = None
+    is_active: bool = True
+
+
 class Service(BaseModel):
     id: str
     name: str
