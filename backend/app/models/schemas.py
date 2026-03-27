@@ -27,7 +27,11 @@ class Container(BaseModel):
     name: str
     image: str
     status: str
+    state: str | None = None
     ports: list[str] = []
+    cpu: str | None = None
+    memory: str | None = None
+    created: str | None = None
 
 
 class HealthCheck(BaseModel):

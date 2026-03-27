@@ -72,14 +72,11 @@ async def check_service_health(service_name: str, url: str | None = None) -> dic
 
 @register_tool("list_containers")
 async def list_containers(status_filter: str = "all") -> dict:
-    """List Docker containers. Returns mock data for now."""
-    containers = [
-        {"id": "abc123def456", "name": "web-api", "image": "devops-agent/api:latest", "status": "running", "ports": ["8080:8080"], "cpu": "2.3%", "memory": "256MB"},
-        {"id": "def456ghi789", "name": "postgres-db", "image": "postgres:16", "status": "running", "ports": ["5432:5432"], "cpu": "1.1%", "memory": "128MB"},
-        {"id": "ghi789jkl012", "name": "redis-cache", "image": "redis:7-alpine", "status": "running", "ports": ["6379:6379"], "cpu": "0.5%", "memory": "64MB"},
-        {"id": "jkl012mno345", "name": "nginx-proxy", "image": "nginx:alpine", "status": "stopped", "ports": [], "cpu": "0%", "memory": "0MB"},
-        {"id": "mno345pqr678", "name": "worker-1", "image": "devops-agent/worker:latest", "status": "running", "ports": [], "cpu": "15.2%", "memory": "512MB"},
-    ]
+    """List Docker containers using the real Docker daemon."""
+    from app.services.docker_service import docker_service
+
+    show_all = status_filter == "all"
+    containers = docker_service.list_containers(all=show_all, include_stats=True)
 
     if status_filter != "all":
         containers = [c for c in containers if c["status"] == status_filter]
@@ -88,20 +85,19 @@ async def list_containers(status_filter: str = "all") -> dict:
         "containers": containers,
         "total": len(containers),
         "filter": status_filter,
+        "docker_available": docker_service.is_available,
     }
 
 
 @register_tool("restart_container")
 async def restart_container(container_id: str, timeout: int = 10) -> dict:
-    """Restart a Docker container. Returns mock data for now."""
-    return {
-        "container_id": container_id,
-        "action": "restart",
-        "timeout": timeout,
-        "status": "running",
-        "message": f"Container {container_id} restarted successfully.",
-        "restarted_at": datetime.now(timezone.utc).isoformat(),
-    }
+    """Restart a Docker container using the real Docker daemon."""
+    from app.services.docker_service import docker_service
+
+    result = docker_service.restart_container(container_id, timeout=timeout)
+    result["action"] = "restart"
+    result["restarted_at"] = datetime.now(timezone.utc).isoformat()
+    return result
 
 
 @register_tool("deploy_service")

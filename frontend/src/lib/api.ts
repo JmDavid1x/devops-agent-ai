@@ -86,6 +86,22 @@ export function getContainers() {
   return fetchAPI("/api/docker/containers");
 }
 
+export function restartContainer(id: string) {
+  return fetchAPI(`/api/docker/containers/${id}/restart`, { method: "POST" });
+}
+
+export function stopContainer(id: string) {
+  return fetchAPI(`/api/docker/containers/${id}/stop`, { method: "POST" });
+}
+
+export function startContainer(id: string) {
+  return fetchAPI(`/api/docker/containers/${id}/start`, { method: "POST" });
+}
+
+export function getContainerStats(id: string) {
+  return fetchAPI(`/api/docker/containers/${id}/stats`);
+}
+
 export function getLogs() {
   return fetchAPI("/api/logs");
 }
