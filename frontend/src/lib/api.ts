@@ -138,3 +138,7 @@ export function getContainerStats(id: string) {
 export function getLogs() {
   return fetchAPI("/api/logs");
 }
+
+export function getMetricsSummary() {
+  return fetchAPI("/api/metrics/summary");
+}

@@ -1,7 +1,10 @@
 import json
 import logging
+import time
 
 from app.core.ai_provider import AIProvider, get_ai_provider
+from app.core.config import settings
+from app.core.metrics import AI_LATENCY, CHAT_REQUESTS, TOOL_EXECUTIONS
 from app.agents.tools import ALL_TOOLS
 from app.agents.tool_executor import execute_tool
 
@@ -53,16 +56,21 @@ class AgentOrchestrator:
 
         self.tools_used = []
 
+        CHAT_REQUESTS.labels(status="started").inc()
+
         for round_num in range(MAX_TOOL_ROUNDS):
             logger.info(f"Agent round {round_num + 1}")
 
+            start_time = time.time()
             response = await self.provider.chat(messages=messages, tools=ALL_TOOLS)
+            duration = time.time() - start_time
+            AI_LATENCY.labels(provider=settings.ai_provider).observe(duration)
 
             tool_calls = response.get("tool_calls", [])
             content = response.get("content", "")
 
             if not tool_calls:
-                # No tools called - we have a final response
+                CHAT_REQUESTS.labels(status="success").inc()
                 return {
                     "content": content,
                     "tools_used": self.tools_used,
@@ -80,7 +88,6 @@ class AgentOrchestrator:
                 tool_name = tc["name"]
                 tool_args = tc["arguments"]
 
-                # OpenAI returns arguments as JSON string, Claude as dict
                 if isinstance(tool_args, str):
                     tool_args = json.loads(tool_args)
 
@@ -89,6 +96,11 @@ class AgentOrchestrator:
                 result = await execute_tool(tool_name, tool_args)
                 self.tools_used.append(tool_name)
 
+                TOOL_EXECUTIONS.labels(
+                    tool_name=tool_name,
+                    status="error" if "error" in result else "success",
+                ).inc()
+
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tc["id"],
@@ -96,7 +108,7 @@ class AgentOrchestrator:
                     "content": json.dumps(result),
                 })
 
-        # If we hit max rounds, return what we have
+        CHAT_REQUESTS.labels(status="max_rounds").inc()
         return {
             "content": content or "I've reached the maximum number of tool rounds. Here's what I found so far.",
             "tools_used": self.tools_used,

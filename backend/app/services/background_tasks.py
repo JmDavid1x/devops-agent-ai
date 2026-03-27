@@ -4,6 +4,7 @@ import logging
 from sqlalchemy import select
 
 from app.core.database import async_session
+from app.core.metrics import SERVICE_HEALTH
 from app.models.db_models import HealthCheckResult, ServiceConfig
 from app.services.health_checker import health_checker
 
@@ -33,6 +34,10 @@ async def run_health_checks():
                 error_message=check_result["error_message"],
             )
             session.add(health_record)
+
+            # Update Prometheus gauge
+            health_value = {"healthy": 1.0, "degraded": 0.5, "down": 0.0}.get(check_result["status"], 0.0)
+            SERVICE_HEALTH.labels(service_name=service.name).set(health_value)
 
         await session.commit()
         logger.info(f"Health checks completed for {len(services)} services")

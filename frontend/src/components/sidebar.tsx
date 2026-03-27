@@ -11,6 +11,7 @@ import {
   Rocket,
   LogOut,
   User,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/services", label: "Services", icon: Server },
   { href: "/docker", label: "Docker", icon: Container },
   { href: "/deployments", label: "Deployments", icon: Rocket },
+  { href: "/monitoring", label: "Monitoring", icon: BarChart3 },
 ];
 
 export function Sidebar() {
