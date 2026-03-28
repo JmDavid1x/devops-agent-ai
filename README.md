@@ -220,6 +220,15 @@ npm install
 **Database locked (SQLite):**
 - SQLite locks the database file when in use. Ensure only one backend process is running.
 
+## Authors
+
+This project was built by:
+
+- **Jose David Mayor** (@JmDavid1x) - Full-stack development, architecture, and project lead
+- **Claude** (AI Assistant by Anthropic) - AI implementation, bug fixes, documentation, and feature development
+
+Special thanks to the open source community for the amazing tools and libraries used in this project.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
