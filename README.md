@@ -68,8 +68,8 @@ This is the easiest way to run the project locally without Docker. Uses SQLite f
 
 **1. Clone and Setup:**
 ```bash
-git clone https://github.com/JmDavid1x/devops-ai-agent.git
-cd devops-ai-agent
+git clone https://github.com/JmDavid1x/devops-agent-ai.git
+cd devops-agent-ai
 ```
 
 **2. Configure Environment:**
@@ -107,8 +107,8 @@ npm run dev
 
 ```bash
 # Clone the repository
-git clone https://github.com/JmDavid1x/devops-ai-agent.git
-cd devops-ai-agent
+git clone https://github.com/JmDavid1x/devops-agent-ai.git
+cd devops-agent-ai
 
 # Copy environment variables
 cp .env.example .env
@@ -126,7 +126,7 @@ docker-compose up -d
 ## Project Structure
 
 ```
-devops-ai-agent/
+devops-agent-ai/
 ├── frontend/                # Next.js application
 │   ├── src/
 │   │   ├── app/             # App Router pages
